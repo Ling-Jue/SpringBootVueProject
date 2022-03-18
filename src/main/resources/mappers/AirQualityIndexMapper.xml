@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lingjue.springbootvueproject.dao.AirQualityIndexMapper">
+
+    <!--获取所有空气区域信息 全查 条件查询-->
+    <select id="getAllAirInfo" resultMap="getAreaName">
+        SELECT aq.*, di.name
+        FROM air_quality_index as aq,district as di
+        where aq.districtId = di.id
+        <if test="districtId != '' and districtId != null">
+            and aq.districtId =
+            #{districtId}
+        </if>
+        ORDER BY aq.id DESC
+        limit #{pageNum},#{pageSize}
+    </select>
+    <resultMap id="getAreaName" type="com.lingjue.springbootvueproject.Pojo.AirQualityIndex">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+    </resultMap>
+
+    <!--获取所有数据总条数-->
+    <select id="selectTotal" resultType="java.lang.Integer">
+        select count(*)
+        from air_quality_index
+        <if test="districtId != '' and districtId != null">
+            where districtId = #{districtId}
+        </if>
+    </select>
+
+    <!--根据ID删除数据-->
+    <delete id="deleteInfo">
+        delete
+        from air_quality_index
+        where id = #{id}
+    </delete>
+
+    <!--根据id批量删除数据-->
+    <delete id="removeByIds">
+        delete
+        from air_quality_index
+        where id in
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--添加数据-->
+    <insert id="addInfo">
+        insert into air_quality_index(districtId, monitorTime, pm10, pm25, monitoringStation, laseModifyTime)
+        values (#{districtId}, #{monitorTime}, #{pm10}, #{pm25}, #{monitoringStation}, #{laseModifyTime})
+    </insert>
+
+    <!--更新数据-->
+    <update id="updateInfo">
+        update air_quality_index
+        set districtId       = #{districtId},
+            monitorTime      = #{monitorTime},
+            pm10=#{pm10},
+            pm25=#{pm25},
+            monitoringStation=#{monitoringStation},
+            laseModifyTime   = #{laseModifyTime}
+        where id = #{id}
+    </update>
+</mapper>
