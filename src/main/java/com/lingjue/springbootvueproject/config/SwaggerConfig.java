@@ -1,59 +1,118 @@
 package com.lingjue.springbootvueproject.config;
 
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.oas.annotations.EnableOpenApi;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
+import springfox.documentation.service.*;
 import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spi.service.contexts.SecurityContext;
 import springfox.documentation.spring.web.plugins.Docket;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Configuration
 @EnableOpenApi
 public class SwaggerConfig {
 
-    /**
-     * 创建API应用
-     * apiInfo() 增加API相关信息
-     * 通过select()函数返回一个ApiSelectorBuilder实例,用来控制哪些接口暴露给Swagger来展现，
-     * 本例采用指定扫描的包路径来定义指定要建立API的目录。
-     * @return
-     */
-    @Bean
-    public Docket restApi() {
-        return new Docket(DocumentationType.OAS_30)
-                .groupName("标准接口")
-                //调用apiInfo方法,创建一个ApiInfo实例,里面是展示在文档页面信息内容
-                .apiInfo(apiInfo("Spring Boot中使用Swagger3构建RESTful APIs", "1.0"))
-                .useDefaultResponseMessages(true)
-                .forCodeGeneration(false)
-                .select()
-                //控制暴露出去的路径下的实例
-                //如果某个接口不想暴露,可以使用以下注解
-                //@ApiIgnore 这样,该接口就不会暴露在 swagger2 的页面下
-                .apis(RequestHandlerSelectors.basePackage("com.lingjue.springbootvueproject.controller"))
-                .paths(PathSelectors.any())
-                .build();
-    }
+  @Value("${swagger.enabled}")
+  private boolean enable;
 
-    /**
-     * 创建该API的基本信息（这些基本信息会展现在文档页面中）
-     * 访问地址：http://ip:port/swagger-ui.html
-     * @return
-     */
-    private ApiInfo apiInfo(String title, String version) {
-        return new ApiInfoBuilder()
-                //页面标题
-                .title(title)
-                //描述
-                .description("更多请关注: https://blog.csdn.net/qq_41375754?type=blog")
-                //条款地址
-                .termsOfServiceUrl("https://blog.csdn.net/qq_41375754?type=blog")
-                .contact(new Contact("LingJue", "https://blog.csdn.net/qq_41375754?type=blog", "1248290205@qq.com"))
-                .version(version)
-                .build();
-    }
+  /**
+   * 创建API
+   * http:IP:端口号/swagger-ui/index.html 原生地址
+   * http:IP:端口号/doc.html bootStrap-UI地址
+   */
+  @Bean
+  public Docket createRestApi() {
+    return new Docket(DocumentationType.OAS_30).pathMapping("/")
+            // 用来创建该API的基本信息，展示在文档的页面中（自定义展示的信息）
+            /*.enable(enable)*/
+            .apiInfo(apiInfo())
+            // 设置哪些接口暴露给Swagger展示
+            .select()
+            // 扫描所有有注解的api，用这种方式更灵活
+//            .apis(RequestHandlerSelectors.withMethodAnnotation(ApiOperation.class))
+            // 扫描指定包中的swagger注解
+            .apis(RequestHandlerSelectors.basePackage("com.lingjue.springbootvueproject.controller"))
+            // 扫描所有 .apis(RequestHandlerSelectors.any())
+            .paths(PathSelectors.regex("(?!/ApiError.*).*"))
+            .paths(PathSelectors.any())
+            .build()
+            // 支持的通讯协议集合
+            .protocols(newHashSet("https", "http"))
+            .securitySchemes(securitySchemes())
+            .securityContexts(securityContexts());
+
+  }
+
+  /**
+   * 支持的通讯协议集合
+   * @param type1
+   * @param type2
+   * @return
+   */
+  private Set<String> newHashSet(String type1, String type2){
+    Set<String> set = new HashSet<>();
+    set.add(type1);
+    set.add(type2);
+    return set;
+  }
+
+  /**
+   * 认证的安全上下文
+   */
+  private List<SecurityScheme> securitySchemes() {
+    List<SecurityScheme> securitySchemes = new ArrayList<>();
+    securitySchemes.add((SecurityScheme) new ApiKey("token", "token", "header"));
+    return securitySchemes;
+  }
+
+  /**
+   * 授权信息全局应用
+   */
+  private List<SecurityContext> securityContexts() {
+    List<SecurityContext> securityContexts = new ArrayList<>();
+    securityContexts.add(SecurityContext.builder()
+            .securityReferences(defaultAuth())
+            .forPaths(PathSelectors.any()).build());
+    return securityContexts;
+  }
+
+  private List<SecurityReference> defaultAuth() {
+    AuthorizationScope authorizationScope = new AuthorizationScope("global", "accessEverything");
+    AuthorizationScope[] authorizationScopes = new AuthorizationScope[1];
+    authorizationScopes[0] = authorizationScope;
+    List<SecurityReference> securityReferences = new ArrayList<>();
+    securityReferences.add(new SecurityReference("Authorization", authorizationScopes));
+    return securityReferences;
+  }
+
+  /**
+   * 添加摘要信息
+   */
+  private ApiInfo apiInfo() {
+    // 用ApiInfoBuilder进行定制
+    return new ApiInfoBuilder()
+            // 设置标题
+            .title("接口测试")
+            // 描述
+            .description("接口测试")
+            // 作者信息
+            .contact(new Contact("doctorCloud", null, null))
+            // 版本
+            .version("版本号:V.1")
+            //协议
+            .license("The Apache License")
+            //协议url
+            .licenseUrl("http://www.baidu.com")
+            .build();
+  }
 }

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lingjue.springbootvueproject.dao.SysUserMapper">
+
+    <sql id="selAll">
+        select id, username, password,nickname,email,phone, address,create_time
+    </sql>
+    <!--查询用户全部数据-->
+    <select id="findAll" resultType="com.lingjue.springbootvueproject.Pojo.SysUser">
+        <include refid="selAll"/>
+        from sys_user
+    </select>
+
+    <!--新增用户信息-->
+    <insert id="insertSysUser">
+        INSERT INTO sys_user (`username`, `password`, `nickname`, `email`, `phone`, `address`)
+        VALUES (#{username}, #{password}, #{nickname}, #{email}, #{phone}, #{address});
+    </insert>
+
+    <!--修改用户信息-->
+    <update id="updateSysUser">
+        UPDATE sys_user
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="address != null">address = #{address}</if>
+        </set>
+        WHERE id = #{id};
+    </update>
+
+    <!--删除用户信息-->
+    <delete id="deleteById">
+        delete from sys_user where id = #{id}
+    </delete>
+
+    <!--分页查询用户信息-->
+    <select id="selectPage" resultType="com.lingjue.springbootvueproject.Pojo.SysUser">
+        <include refid="selAll"/>
+        from sys_user limit #{pageNum},#{pageSize}
+    </select>
+    <!--查询总条数-->
+    <select id="selectTotal" resultType="java.lang.Integer">
+        select count(*) from sys_user
+    </select>
+
+</mapper>
